@@ -1,6 +1,6 @@
 // ---------------------sub contract types-------------------
 struct DecasinoMainContractStateInit {
-    subContractCode: Cell;
+    walletCode: Cell;
 }
 
 

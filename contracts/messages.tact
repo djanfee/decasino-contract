@@ -15,3 +15,7 @@ message DepositWithUsdt {
 message Withdraw {
     queryId: Int as uint64;
 }
+
+message CommitDeposit {
+    amount: Int as uint64;
+}
