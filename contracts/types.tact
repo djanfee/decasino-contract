@@ -5,6 +5,3 @@ struct DecasinoMainContractStateInit {
 
 
 // ---------------------sub contract types-------------------
-struct DecasinoWalletStateInit {
-    usdtJettonAddress: Address;
-}

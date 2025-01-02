@@ -1,6 +1,8 @@
 // ---------------------main contract messages-------------------
-message DepositWithTon {
+message Deposit {
     queryId: Int as uint64;
+    usdtAmount: Int as uint64;
+    btcAmount: Int as uint64;
 }
 message DepositWithBetCoin {
     queryId: Int as uint64;
@@ -17,5 +19,13 @@ message Withdraw {
 }
 
 message CommitDeposit {
-    amount: Int as uint64;
+    usdtAmount: Int as uint64;
+    btcAmount: Int as uint64;
+    sender: Address;
+    tonOngoing: Bool;
+    usdtOngoing: Bool;
+    btcOngoing: Bool;
+    tonBeginRound: Int as uint64;
+    usdtBeginRound: Int as uint64;
+    btcBeginRound: Int as uint64;
 }
