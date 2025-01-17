@@ -1,8 +1,6 @@
 // ---------------------main contract messages-------------------
 message Deposit {
     queryId: Int as uint64;
-    usdtAmount: Int as uint64;
-    btcAmount: Int as uint64;
 }
 message DepositWithBetCoin {
     queryId: Int as uint64;
@@ -15,6 +13,12 @@ message DepositWithUsdt {
 
 // ---------------------wallet messages-------------------
 message Withdraw {
+    queryId: Int as uint64;
+}
+message WithdrawBetCoin {
+    queryId: Int as uint64;
+}
+message WithdrawUsdt {
     queryId: Int as uint64;
 }
 

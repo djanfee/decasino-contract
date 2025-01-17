@@ -17,7 +17,7 @@ contract DeCasinoMainContract with Deployable {
     }
 
     receive(msg: Deposit) {
-        
+       
         
     }
 
