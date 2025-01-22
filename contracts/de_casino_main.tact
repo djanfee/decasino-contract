@@ -33,11 +33,8 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
         nativeThrowUnless(self.IncorrectId, msg.id == self.id);
 
         let ctx: Context = context();
-
         let winit: StateInit = self.getCasinoWalletInit(sender());
         let wAddress: Address = contractAddress(winit);
-        //We shouldn't send transfers to masterchain due to higher gas price
-        nativeThrowUnless(self.InvalidDestinationWorkchain, wAddress.workchain == 0);
 
         send(SendParameters{
             to: wAddress,
@@ -46,7 +43,8 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
             mode: SendRemainingValue | SendIgnoreErrors,
             body: DepositWithTonInternal{
                 id: msg.id,
-                user: sender()
+                user: sender(),
+                tonAmount: msg.tonAmount
             }.toCell(),
             code: winit.code,
             data: winit.data

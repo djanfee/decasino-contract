@@ -3,15 +3,17 @@ import "@stdlib/ownable";
 import "./messages.tact";
 import "./error.tact";
 import "./constants.tact";
+import "./types.tact";
+
 contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
     const gasConsumption: Int = ton("0.02");
     const minTonsForStorage: Int = ton("0.02");
     const minTonDepositAmount: Int = ton("1");
     master: Address;
     owner: Address;
-    tonDepositAmount: Int = 0;
+    tonDepositAmount: Int as coins = 0;
     tonOngoing: Bool = false;
-    tonBeginRound: Int = 0;
+    tonBeginRound: Int as uint64 = 0;
 
     init(owner: Address, master: Address) {
         self.owner = owner;
@@ -42,10 +44,12 @@ contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
                 id: msg.id,
                 user: sender(),
                 tonAmount: msg.tonAmount
-            }.toCell()
+            }.toCell(),
         });
-
-
+        let timestamp = now();
+        self.tonBeginRound = timestamp/(60*60*24*7)+1;
+        self.tonOngoing = true;
+        self.tonDepositAmount = msg.tonAmount;
     }
 
     inline fun userRefund(msg: DepositWithTonInternal, code: Int) {
