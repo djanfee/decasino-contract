@@ -2,69 +2,61 @@ import "@stdlib/deploy";
 import "@stdlib/ownable";
 import "./messages.tact";
 import "./error.tact";
-contract DeCasinoMainContract with Deployable,Ownable {
+import "./constants.tact";
+contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
+    const gasConsumption: Int = ton("0.02");
+    const minTonsForStorage: Int = ton("0.02");
+    const minTonDepositAmount: Int = ton("1");
+    master: Address;
     owner: Address;
-    gasBuffer: Int = ton("0.1");
     tonDepositAmount: Int = 0;
-    usdtDepositAmount: Int = 0;
-    btcDepositAmount: Int = 0;
     tonOngoing: Bool = false;
-    usdtOngoing: Bool = false;
-    btcOngoing: Bool = false;
     tonBeginRound: Int = 0;
-    usdtBeginRound: Int = 0;
-    btcBeginRound: Int = 0;
-    minTonDepositAmount: Int = ton("1");
-    minUsdtDepositAmount: Int = ton("1");
-    minBtcDepositAmount: Int = ton("1");
 
-    init(owner: Address) {
+    init(owner: Address, master: Address) {
         self.owner = owner;
+        self.master = master;
     }
 
-    receive(msg: CommitDeposit) {
+    receive(msg: DepositWithTonInternal) {
+        nativeThrowUnless(self.IncorrectSender, self.master == sender());
+        if (self.tonOngoing) {
+            self.userRefund(msg, self.AlreadyDeposited);
+            return;
+        }
         let ctx: Context = context();
-        if ctx.value > 0 {
-            if msg.tonOngoing {
-                msg.tonOngoing = true;
-            } else {
-                if ctx.value<self.minTonDepositAmount+self.gasBuffer {
-                    throw(invalidDepositAmount);
-                }
-                let effectiveTonAmount = (ctx.value - self.gasBuffer)/ton("1");
-                self.tonDepositAmount += effectiveTonAmount;
-                self.tonBeginRound = msg.tonBeginRound;
-                self.tonOngoing = true;
-                msg.tonOngoing = false;
-            }
+        let msgValue: Int = ctx.value;
+        let tonBalanceBeforeMsg = myBalance() - msgValue;
+        let storageFee = self.minTonsForStorage - min(tonBalanceBeforeMsg, self.minTonsForStorage);
+        let totalFees: Int = (2*ctx.readForwardFee() + 2 * self.gasConsumption) + self.minTonsForStorage + msg.tonAmount + storageFee;
+        if (msgValue <= totalFees) {
+            self.userRefund(msg, self.UnsufficientAmountOfTonAttached);
+            return;
         }
-        if msg.usdtAmount>0 {
-            if msg.usdtAmount<self.minUsdtDepositAmount {
-                throw(invalidDepositAmount);
-            }
-            let effectiveUsdtAmount = msg.usdtAmount/ton("1");
-            self.usdtDepositAmount += effectiveUsdtAmount;
-            self.usdtBeginRound = msg.usdtBeginRound;
-            self.usdtOngoing = true;
-            msg.usdtOngoing = false;
-        }
-        if msg.btcAmount>0 {
-            if msg.btcAmount<self.minBtcDepositAmount {
-                throw(invalidDepositAmount);
-            }
-            let effectiveBtcAmount = msg.btcAmount/ton("1");
-            self.btcDepositAmount += effectiveBtcAmount;
-            self.btcBeginRound = msg.btcBeginRound;
-            self.btcOngoing = true;
-            msg.btcOngoing = false;
-        }
-       
         send(SendParameters{
-            bounce: false,
-            to: sender(),
+            to: self.master,
             value: 0,
-            mode: SendIgnoreErrors,
-            body: msg.toCell(),
+            bounce: true,
+            mode: SendRemainingValue,
+            body: DepositWithTonCommit{
+                id: msg.id,
+                user: sender(),
+                tonAmount: msg.tonAmount
+            }.toCell()
+        });
+
+
+    }
+
+    inline fun userRefund(msg: DepositWithTonInternal, code: Int) {
+        send(SendParameters{
+            to: msg.user,
+            value: 0,
+            bounce: false,
+            mode: SendRemainingValue | SendIgnoreErrors,
+            body: UserRefundInfo{
+                code: code
+            }.toCell()
         });
     }
 }

@@ -1,8 +1,13 @@
-// ---------------------sub contract types-------------------
+// ---------------------main contract types-------------------
 struct DecasinoMainContractStateInit {
     walletCode: Cell;
     revenueCode: Cell;
+    usdtWalletCode: Cell;
+    betcoinWalletCode: Cell;
 }
 
 
-// ---------------------sub contract types-------------------
+// ---------------------wallet contract types-------------------
+struct UserRefundInfo {
+    code: Int;
+}

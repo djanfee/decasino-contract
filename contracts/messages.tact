@@ -1,25 +1,36 @@
 // ---------------------main contract messages-------------------
-message Deposit {
-    queryId: Int as uint64;
+message DepositWithTon {
+    id: Int as uint64;
+    tonAmount: Int as coins;
+}
+message DepositWithTonInternal {
+    id: Int as uint64;
+    user: Address;
+    tonAmount: Int as coins;
+}
+message DepositWithTonCommit {
+    id: Int as uint64;
+    user: Address;
+    tonAmount: Int as coins;
 }
 message DepositWithBetCoin {
-    queryId: Int as uint64;
+    id: Int as uint64;
     amount: Int as uint64;
 }
 message DepositWithUsdt {
-    queryId: Int as uint64;
+    id: Int as uint64;
     amount: Int as uint64;
 }
 
 // ---------------------wallet messages-------------------
 message Withdraw {
-    queryId: Int as uint64;
+    id: Int as uint64;
 }
 message WithdrawBetCoin {
-    queryId: Int as uint64;
+    id: Int as uint64;
 }
 message WithdrawUsdt {
-    queryId: Int as uint64;
+    id: Int as uint64;
 }
 
 message CommitDeposit {
