@@ -8,6 +8,6 @@ struct DecasinoMainContractStateInit {
 
 
 // ---------------------wallet contract types-------------------
-struct UserRefundInfo {
+struct UserTonRefundInfo {
     code: Int;
 }

@@ -9,4 +9,5 @@ trait WalletExitcodes {
     const IncorrectSender: Int = 401;
     const AlreadyDeposited: Int = 402;
     const UnsufficientAmountOfTonAttached: Int = 403;
+    const IncorrectId: Int = 404;
 }

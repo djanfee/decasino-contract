@@ -9,6 +9,7 @@ contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
     const gasConsumption: Int = ton("0.02");
     const minTonsForStorage: Int = ton("0.02");
     const minTonDepositAmount: Int = ton("1");
+    id: Int as uint64 = 1;
     master: Address;
     owner: Address;
     tonDepositAmount: Int as coins = 0;
@@ -23,7 +24,13 @@ contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
     receive(msg: DepositWithTonPrepare) {
         nativeThrowUnless(self.IncorrectSender, self.master == sender());
         if (self.tonOngoing) {
-            self.userRefund(msg.user, self.AlreadyDeposited);
+            send(SendParameters{
+                to: msg.user,
+                value: 0,
+                bounce: false,
+                mode: SendRemainingValue,
+                body: emptyCell()
+            });
             return;
         }
         send(SendParameters{
@@ -47,15 +54,14 @@ contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
         self.tonDepositAmount = msg.tonAmount;
     }
 
-    inline fun userRefund(user: Address, code: Int) {
-        send(SendParameters{
-            to: user,
-            value: 0,
-            bounce: false,
-            mode: SendRemainingValue | SendIgnoreErrors,
-            body: UserRefundInfo{
-                code: code
-            }.toCell()
-        });
+    receive(msg: BetWithTon) {
+        nativeThrowUnless(self.IncorrectId, msg.id == self.id);
+        let ctx: Context = context();
+        let msgValue: Int = ctx.value;
+        let tonBalanceBeforeMsg = myBalance() - msgValue;
+        let totalFees: Int = (2 * ctx.readForwardFee() + 2 * self.gasConsumption) + self.minTonsForStorage + msg.tonAmount;
+        nativeThrowUnless(self.UnsufficientAmountOfTonAttached, msgValue <= totalFees);
+
+
     }
 }

@@ -33,6 +33,7 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
         self.betcoinWalletCode = initData.betcoinWalletCode;
     }
 
+    // ton
     receive(msg: DepositWithTon) {
         nativeThrowUnless(self.IncorrectId, msg.id == self.id);
 
@@ -62,7 +63,7 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
     }
 
     receive(msg: DepositWithTonCommit) {
-        nativeThrowUnless(self.IncorrectId, msg.id < self.id);
+        nativeThrowUnless(self.IncorrectId, msg.id <= self.id);
         let workchain: Int = parseStdAddress(msg.user.asSlice()).workchain;
         nativeThrowUnless(self.InvalidWorkchain, workchain == 0);
         let winit: StateInit = self.getCasinoWalletInit(msg.user);
@@ -85,6 +86,32 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
         });
     }
 
+    receive(msg: BetWithTon){
+        nativeThrowUnless(self.IncorrectId, msg.id == self.id);
+        
+        let ctx: Context = context();
+        let msgValue: Int = ctx.value;
+        let tonBalanceBeforeMsg = myBalance() - msgValue;
+        let totalFees: Int = (ctx.readForwardFee() + self.gasConsumption) + self.minTonsForStorage + msg.tonAmount;
+        nativeThrowUnless(self.UnsufficientAmountOfTonAttached, msgValue <= totalFees);
+
+        send(SendParameters{
+            to: myAddress(),
+            value: 0,
+            bounce: true,
+            mode: SendRemainingValue,
+            body: BetWithTonCommit{
+                id: msg.id,
+                user: sender(),
+                tonAmount: msg.tonAmount
+            }.toCell(),
+        });
+        self.id += 1;
+    }
+
+    receive(msg: BetWithTonCommit) {
+        nativeThrowUnless(self.IncorrectSender, sender() == myAddress());
+    }
 
     get fun id(): Int {
         return self.id;

@@ -1,4 +1,5 @@
 // ---------------------main contract messages-------------------
+// ton
 message DepositWithTon {
     id: Int as uint64;
     tonAmount: Int as coins;
@@ -14,10 +15,23 @@ message DepositWithTonCommit {
     tonAmount: Int as coins;
     beginRound: Int as uint64;
 }
+message BetWithTon {
+    id: Int as uint64;
+    tonAmount: Int as coins;
+}
+message BetWithTonCommit {
+    id: Int as uint64;
+    user: Address;
+    tonAmount: Int as coins;
+}
+
+// betcoin
 message DepositWithBetCoin {
     id: Int as uint64;
     amount: Int as uint64;
 }
+
+// usdt
 message DepositWithUsdt {
     id: Int as uint64;
     amount: Int as uint64;
