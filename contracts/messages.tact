@@ -3,7 +3,7 @@ message DepositWithTon {
     id: Int as uint64;
     tonAmount: Int as coins;
 }
-message DepositWithTonInternal {
+message DepositWithTonPrepare {
     id: Int as uint64;
     user: Address;
     tonAmount: Int as coins;
@@ -12,6 +12,7 @@ message DepositWithTonCommit {
     id: Int as uint64;
     user: Address;
     tonAmount: Int as coins;
+    beginRound: Int as uint64;
 }
 message DepositWithBetCoin {
     id: Int as uint64;

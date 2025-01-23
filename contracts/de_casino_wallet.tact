@@ -20,19 +20,10 @@ contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
         self.master = master;
     }
 
-    receive(msg: DepositWithTonInternal) {
+    receive(msg: DepositWithTonPrepare) {
         nativeThrowUnless(self.IncorrectSender, self.master == sender());
         if (self.tonOngoing) {
-            self.userRefund(msg, self.AlreadyDeposited);
-            return;
-        }
-        let ctx: Context = context();
-        let msgValue: Int = ctx.value;
-        let tonBalanceBeforeMsg = myBalance() - msgValue;
-        let storageFee = self.minTonsForStorage - min(tonBalanceBeforeMsg, self.minTonsForStorage);
-        let totalFees: Int = (2*ctx.readForwardFee() + 2 * self.gasConsumption) + self.minTonsForStorage + msg.tonAmount + storageFee;
-        if (msgValue <= totalFees) {
-            self.userRefund(msg, self.UnsufficientAmountOfTonAttached);
+            self.userRefund(msg.user, self.AlreadyDeposited);
             return;
         }
         send(SendParameters{
@@ -43,18 +34,22 @@ contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
             body: DepositWithTonCommit{
                 id: msg.id,
                 user: sender(),
-                tonAmount: msg.tonAmount
+                tonAmount: msg.tonAmount,
+                beginRound: 0
             }.toCell(),
         });
-        let timestamp = now();
-        self.tonBeginRound = timestamp/(60*60*24*7)+1;
+    }
+
+    receive(msg: DepositWithTonCommit) {
+        nativeThrowUnless(self.IncorrectSender, self.master == sender());
         self.tonOngoing = true;
+        self.tonBeginRound = msg.beginRound;
         self.tonDepositAmount = msg.tonAmount;
     }
 
-    inline fun userRefund(msg: DepositWithTonInternal, code: Int) {
+    inline fun userRefund(user: Address, code: Int) {
         send(SendParameters{
-            to: msg.user,
+            to: user,
             value: 0,
             bounce: false,
             mode: SendRemainingValue | SendIgnoreErrors,

@@ -1,7 +1,7 @@
 import "@stdlib/deploy";
 import "@stdlib/ownable";
 
-contract DeCasinoMainContract with Deployable {
+contract DeCasinoRevenueContract with Deployable {
     init(owner: Address) {
         
     }
