@@ -8,6 +8,15 @@ struct DecasinoMainContractStateInit {
 
 
 // ---------------------wallet contract types-------------------
-struct UserTonRefundInfo {
-    code: Int;
+struct DecasinoWalletContractStateInit {
+    master: Address;
+    owner: Address;
+}
+
+// ---------------------revenue contract types-------------------
+struct DecasinoRevenueContractStateInit {
+    round: Int as uint64;
+    unitTonRevenue: Int as coins;
+    master: Address;
+    walletCode: Cell;
 }

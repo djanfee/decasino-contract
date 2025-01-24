@@ -5,10 +5,7 @@ import "./error.tact";
 import "./constants.tact";
 import "./types.tact";
 
-contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
-    const gasConsumption: Int = ton("0.02");
-    const minTonsForStorage: Int = ton("0.02");
-    const minTonDepositAmount: Int = ton("1");
+contract DeCasinoWalletContract with Ownable,WalletExitcodes,CommonConstants {
     id: Int as uint64 = 1;
     master: Address;
     owner: Address;
@@ -16,9 +13,9 @@ contract DeCasinoWalletContract with Deployable,Ownable,WalletExitcodes {
     tonOngoing: Bool = false;
     tonBeginRound: Int as uint64 = 0;
 
-    init(owner: Address, master: Address) {
-        self.owner = owner;
-        self.master = master;
+    init(initData: DecasinoWalletContractStateInit) {
+        self.owner = initData.owner;
+        self.master = initData.master;
     }
 
     receive(msg: DepositWithTonPrepare) {

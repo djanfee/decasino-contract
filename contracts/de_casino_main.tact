@@ -5,6 +5,7 @@ import "./messages.tact";
 import "./error.tact";
 import "./de_casino_wallet.tact";
 import "./constants.tact";
+import "./de_casino_revenue.tact";
 
 struct DeCasinoMainContractState {
     id: Int as uint64 = 0;
@@ -12,9 +13,8 @@ struct DeCasinoMainContractState {
     revenueCode: Cell;
 }
 
-contract DeCasinoMainContract with Deployable, MainExitcodes {
-    const minTonsForStorage: Int = ton("0.015"); // 0.01 TON in original funC implementation. Increased as we have approx. x2 code size
-    const gasConsumption: Int = ton("0.015"); // 0.015 TON in original funC implementation.
+contract DeCasinoMainContract with Deployable, MainExitcodes,CommonConstants {
+    const userWinPercentage: Int = 48;
     id: Int as uint64 = 1;
     walletCode: Cell;
     revenueCode: Cell;
@@ -22,9 +22,9 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
     betcoinWalletCode: Cell;
     depositTonAmount: Int as coins = 0;
     nextRoundDepositTonAmount: Int as coins = 0;
-    nextRoundDepositUserCount: Int as uint64 = 0;
-    tonRevenue: Int as coins = 0;
-    currentTonRound: Int as uint64 = 0;
+    tonRevenue: Int as int64 = 0;
+    currentRound: Int as uint64 = 0;
+    currentRoundTimestamp: Int as uint32 = 0;
 
     init(initData:DecasinoMainContractStateInit) {
         self.walletCode = initData.walletCode;
@@ -71,7 +71,6 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
         nativeThrowUnless(self.IncorrectSender, sender() == wAddress);
 
         self.nextRoundDepositTonAmount += msg.tonAmount;
-        self.nextRoundDepositUserCount += 1;
          send(SendParameters{
             to: sender(),
             value: self.minTonsForStorage,
@@ -81,19 +80,25 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
                 id: msg.id,
                 user: sender(),
                 tonAmount: msg.tonAmount,
-                beginRound: self.currentTonRound + 1
+                beginRound: self.currentRound + 1
             }.toCell()
         });
     }
 
     receive(msg: BetWithTon){
+        nativeThrowUnless(self.IncorrectPercentage, msg.percentage <= 45 && msg.percentage >= 1);
         nativeThrowUnless(self.IncorrectId, msg.id == self.id);
-        
+
+        let expectedProfit: Int = self.userWinPercentage*2;
+        let winAmount: Int = expectedProfit*msg.tonAmount/msg.percentage;
+        nativeThrowUnless(self.IncorrectExpectedProfit, winAmount < (self.depositTonAmount + self.tonRevenue));
+
         let ctx: Context = context();
         let msgValue: Int = ctx.value;
         let tonBalanceBeforeMsg = myBalance() - msgValue;
         let totalFees: Int = (ctx.readForwardFee() + self.gasConsumption) + self.minTonsForStorage + msg.tonAmount;
         nativeThrowUnless(self.UnsufficientAmountOfTonAttached, msgValue <= totalFees);
+
 
         send(SendParameters{
             to: myAddress(),
@@ -103,7 +108,8 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
             body: BetWithTonCommit{
                 id: msg.id,
                 user: sender(),
-                tonAmount: msg.tonAmount
+                tonAmount: msg.tonAmount,
+                percentage: msg.percentage
             }.toCell(),
         });
         self.id += 1;
@@ -111,6 +117,24 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
 
     receive(msg: BetWithTonCommit) {
         nativeThrowUnless(self.IncorrectSender, sender() == myAddress());
+        nativeRandomizeLt(); 
+        let expectedProfit: Int = self.userWinPercentage*2;
+        let winAmount: Int = expectedProfit*msg.tonAmount/msg.percentage;
+        let randomResult: Int = random(0,100);
+        let win: Bool = randomResult < msg.percentage;
+        if win {
+            send(SendParameters{
+                to: msg.user,
+                value: winAmount,
+                bounce: true,
+                mode: SendPayGasSeparately,
+                body: emptyCell(),
+            });
+            self.tonRevenue -= msg.tonAmount;
+        } else {
+            self.depositTonAmount += msg.tonAmount;
+        }
+        self.calculateRevenue();
     }
 
     get fun id(): Int {
@@ -118,10 +142,39 @@ contract DeCasinoMainContract with Deployable, MainExitcodes {
     }
 
     inline fun getCasinoWalletInit(address: Address): StateInit {
-        return initOf DeCasinoWalletContract(address, myAddress());
+        let initData: DecasinoWalletContractStateInit = DecasinoWalletContractStateInit{
+            master: myAddress(),
+            owner: address
+        };
+        return initOf DeCasinoWalletContract(initData);
     }
 
     inline fun calculateRevenue() {
-        
+        let currentTimestamp: Int = now();
+        if (currentTimestamp - self.currentRoundTimestamp >= 7*24*60*60) {
+            let tmpTonRevenueUnit: Int = self.tonRevenue/self.depositTonAmount;
+            let initData: DecasinoRevenueContractStateInit = DecasinoRevenueContractStateInit{
+                round: self.currentRound,
+                unitTonRevenue: tmpTonRevenueUnit,
+                master: myAddress(),
+                walletCode: self.walletCode
+            };
+            let revenueInit: StateInit = initOf DeCasinoRevenueContract(initData);
+            let revenueAddress: Address = contractAddress(revenueInit);
+            send(SendParameters{
+                to: revenueAddress,
+                value: self.minTonsForStorage,
+                bounce: true,
+                mode: SendPayGasSeparately,
+                body: emptyCell(),
+                code: revenueInit.code,
+                data: revenueInit.data
+            });
+            self.currentRound += 1;
+            self.currentRoundTimestamp = currentTimestamp/(7*24*60*60)*(7*24*60*60);
+            self.depositTonAmount += self.nextRoundDepositTonAmount;
+            self.nextRoundDepositTonAmount = 0;
+        }
     }
 }
+
