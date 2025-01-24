@@ -3,7 +3,7 @@ import "@stdlib/ownable";
 import "./constants.tact";
 import "./types.tact";
 
-contract DeCasinoRevenueContract with CommonConstants {
+contract Contract3 with CommonConstants {
     round: Int as uint64;
     unitTonRevenue: Int as coins;
     master: Address;

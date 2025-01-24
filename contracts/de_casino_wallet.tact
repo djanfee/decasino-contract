@@ -30,6 +30,7 @@ contract DeCasinoWalletContract with Ownable,WalletExitcodes,CommonConstants {
             });
             return;
         }
+        self.tonOngoing = true;
         send(SendParameters{
             to: self.master,
             value: 0,
@@ -46,7 +47,6 @@ contract DeCasinoWalletContract with Ownable,WalletExitcodes,CommonConstants {
 
     receive(msg: DepositWithTonCommit) {
         nativeThrowUnless(self.IncorrectSender, self.master == sender());
-        self.tonOngoing = true;
         self.tonBeginRound = msg.beginRound;
         self.tonDepositAmount = msg.tonAmount;
     }

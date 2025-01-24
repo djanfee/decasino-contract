@@ -14,7 +14,6 @@ struct DeCasinoMainContractState {
 }
 
 contract DeCasinoMainContract with Deployable, MainExitcodes,CommonConstants {
-    const userWinPercentage: Int = 48;
     id: Int as uint64 = 1;
     walletCode: Cell;
     revenueCode: Cell;
@@ -35,7 +34,7 @@ contract DeCasinoMainContract with Deployable, MainExitcodes,CommonConstants {
 
     // ton
     receive(msg: DepositWithTon) {
-        nativeThrowUnless(self.IncorrectId, msg.id == self.id);
+        self.calculateRevenue();
 
         let ctx: Context = context();
         let winit: StateInit = self.getCasinoWalletInit(sender());
@@ -59,7 +58,6 @@ contract DeCasinoMainContract with Deployable, MainExitcodes,CommonConstants {
             code: winit.code,
             data: winit.data
         });
-        self.id += 1;
     }
 
     receive(msg: DepositWithTonCommit) {

@@ -18,4 +18,5 @@ trait CommonConstants {
     const minTonsForStorage: Int = ton("0.015"); // 0.01 TON in original funC implementation. Increased as we have approx. x2 code size
     const gasConsumption: Int = ton("0.015"); // 0.015 TON in original funC implementation.
     const minTonDepositAmount: Int = ton("1");
+    const userWinPercentage: Int = 48;
 }
