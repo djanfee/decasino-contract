@@ -1,1 +1,0 @@
-export * from '../build/DeCasinoRevenueContract/tact_DeCasinoRevenueContract';

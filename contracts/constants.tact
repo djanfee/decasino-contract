@@ -5,6 +5,7 @@ trait MainExitcodes {
     const UnsufficientAmountOfTonAttached: Int = 304;
     const IncorrectPercentage: Int = 305;
     const IncorrectExpectedProfit: Int = 306;
+    const InvalidParams: Int = 307;
 }
 
 trait WalletExitcodes {
