@@ -16,4 +16,13 @@ message BetWithTonCommit {
     percentage: Int as uint16;
 }
 
+message(0xf8a7ea5) JettonTransfer {
+    queryId: Int as uint64;
+    amount: Int as coins;
+    destination: Address;
+    responseDestination: Address?;
+    customPayload: Cell? = null;
+    forwardTonAmount: Int as coins;
+    forwardPayload: Slice as remaining;
+}
 // ---------------------lp contract messages-------------------

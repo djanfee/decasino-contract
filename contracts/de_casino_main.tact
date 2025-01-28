@@ -48,7 +48,7 @@ contract DeCasinoMainContract with Deployable, MainExitcodes,CommonConstants {
         });
     }
 
-     receive(msg: BetWithTon){
+    receive(msg: BetWithTon){
         nativeThrowUnless(self.IncorrectPercentage, msg.percentage <= 45 && msg.percentage >= 1);
 
         let expectedWinAmount: Int = self.userWinPercentage * 2 * msg.tonAmount / msg.percentage;
@@ -94,6 +94,8 @@ contract DeCasinoMainContract with Deployable, MainExitcodes,CommonConstants {
             self.revenue += msg.tonAmount;
         }
     }
+
+    
 
     get fun id(): Int {
         return self.id;
